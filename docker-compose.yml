@@ -65,16 +65,20 @@ services:
       - "5000:5000"
     environment:
       - LT_LOAD_ONLY=en,pt,es 
-      - LT_REQ_LIMIT=0            
+      - LT_REQ_LIMIT=0
+      - LT_THREADS=4
+      - LT_DISABLE_WEB_UI=true
+      - LT_DISABLE_FILES_TRANSLATION=true
+      - LT_DISABLE_API_KEY=true
     volumes:
       - libretranslate-data:/home/libretranslate/.local/share/argos-translate
       - libretranslate-cache:/home/libretranslate/.cache/argos-translate
     healthcheck:
       test: ["CMD-SHELL", "wget --quiet --tries=1 --spider http://localhost:5000/languages || exit 1"]
-      interval: 60s
+      interval: 30s
       timeout: 30s
       retries: 10
-      start_period: 180s
+      start_period: 300s
     networks:
       - translation-network
 

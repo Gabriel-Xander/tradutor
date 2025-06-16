@@ -44,6 +44,12 @@ docker-compose up -d --build
 3. **Aguarde a inicialização**
 O LibreTranslate pode demorar alguns minutos para baixar os modelos de tradução na primeira execução.
 
+> **Nota sobre o LibreTranslate:**
+> - O serviço tem um período inicial de inicialização de 300 segundos (5 minutos)
+> - Este tempo é necessário para baixar e carregar os modelos de tradução
+> - O serviço está configurado para suportar apenas os idiomas: inglês (en), português (pt) e espanhol (es)
+> - Durante a primeira execução, é normal que as requisições de tradução falhem até que o serviço esteja completamente inicializado
+
 ## 🌐 Endpoints e Interfaces
 
 ### API REST
