@@ -1,0 +1,32 @@
+{
+    "name": "translation-api",
+    "version": "1.0.0",
+    "description": "API para serviço de tradução",
+    "main": "src/index.js",
+    "scripts": {
+      "start": "node src/index.js",
+      "dev": "nodemon src/index.js",
+      "swagger": "node src/swagger/generate.js",
+      "prisma:generate": "prisma generate",
+      "prisma:push": "prisma db push"
+    },
+    "keywords": [],
+    "author": "",
+    "license": "ISC",
+    "dependencies": {
+      "@prisma/client": "^5.22.0",
+      "express": "^4.21.1",
+      "amqplib": "^0.10.4",
+      "axios": "^1.7.7",
+      "cors": "^2.8.5",
+      "helmet": "^8.0.0",
+      "swagger-ui-express": "5.0.1",
+      "swagger-jsdoc": "^6.2.8",
+      "uuid": "^10.0.0"
+    },
+    "devDependencies": {
+      "nodemon": "^3.1.7",
+      "prisma": "^5.22.0"
+    }
+  }
+  

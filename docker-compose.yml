@@ -1,0 +1,131 @@
+services:
+
+  translation-api:
+    build:
+      context: ./translation-api
+      dockerfile: Dockerfile
+    container_name: translation-api
+    restart: unless-stopped
+    user: "0:0"
+    ports:
+      - "4040:4040"
+    environment:
+      - NODE_ENV=development
+      - PORT=4040
+      - HOST=0.0.0.0
+      - SERVER_SW=http://localhost:4040
+      - DATABASE_URL=file:/app/data/dev.db
+      - RABBITMQ=amqp://guest:guest@rabbitmq:5672
+      - SERVER=http://translation-api:4040
+    volumes:
+      - sqlite_data:/app/data
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:4040/translations/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - translation-network
+
+  translation-worker:
+    build:
+      context: ./translation-worker
+      dockerfile: Dockerfile
+    container_name: translation-worker
+    restart: unless-stopped
+    user: "0:0"
+    environment:
+      - NODE_ENV=development
+      - RABBITMQ=amqp://guest:guest@rabbitmq:5672
+      - MAX_RETRIES=3
+      - LIBRETRANSLATE_URL=http://libretranslate:5000
+      - API_URL=http://translation-api:4040
+    volumes:
+      - sqlite_data:/app/data
+    depends_on:
+      translation-api:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      libretranslate:
+        condition: service_started
+    networks:
+      - translation-network
+
+  libretranslate:
+    image: libretranslate/libretranslate:v1.6.5
+    container_name: libretranslate
+    restart: unless-stopped
+    user: root                    
+    ports:
+      - "5000:5000"
+    environment:
+      - LT_LOAD_ONLY=en,pt,es 
+      - LT_REQ_LIMIT=0            
+    volumes:
+      - libretranslate-data:/home/libretranslate/.local/share/argos-translate
+      - libretranslate-cache:/home/libretranslate/.cache/argos-translate
+    healthcheck:
+      test: ["CMD-SHELL", "wget --quiet --tries=1 --spider http://localhost:5000/languages || exit 1"]
+      interval: 60s
+      timeout: 30s
+      retries: 10
+      start_period: 180s
+    networks:
+      - translation-network
+
+  rabbitmq:
+    image: rabbitmq:3.12-management
+    container_name: translation-rabbitmq
+    restart: unless-stopped
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: "guest"
+      RABBITMQ_DEFAULT_PASS: "guest"
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    networks:
+      - translation-network
+
+  adminer:
+    build:
+      context: ./adminer
+      dockerfile: Dockerfile
+    container_name: translation-adminer
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      - ADMINER_DEFAULT_SERVER=sqlite
+    volumes:
+      - sqlite_data:/var/www/html/data
+    depends_on:
+      - translation-api
+    networks:
+      - translation-network
+
+volumes:
+  sqlite_data:
+    name: sqlite-data
+  rabbitmq_data:
+    name: rabbitmq-data
+  libretranslate-data:
+    name: libretranslate-data
+  libretranslate-cache:
+    name: libretranslate-cache
+
+networks:
+  translation-network:
+    name: translation-network
+    driver: bridge
