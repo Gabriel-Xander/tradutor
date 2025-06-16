@@ -1,4 +1,5 @@
 const TranslationService = require('../services/TranslationService');
+const { validateLanguages } = require('../helpers/languageValidator');
 
 class TranslationController {
   static async create(req, res, next) {
@@ -8,6 +9,16 @@ class TranslationController {
       if (!originalText || !sourceLanguage || !targetLanguage) {
         return res.status(400).json({
           error: 'Missing required fields: originalText, sourceLanguage, targetLanguage'
+        });
+      }
+
+      const languageValidation = validateLanguages(sourceLanguage, targetLanguage);
+      if (!languageValidation.isValid) {
+        return res.status(400).json({
+          error: 'Linguagens não suportadas',
+          details: languageValidation.errors,
+          supportedLanguages: languageValidation.supportedLanguages,
+          message: `Apenas suportamos as linguagens: ${languageValidation.supportedLanguages.join(', ')}`
         });
       }
 
